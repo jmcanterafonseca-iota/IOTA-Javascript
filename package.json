@@ -1,0 +1,30 @@
+{
+  "name": "iota-test",
+  "version": "1.0.0",
+  "description": "Tests with IOTA",
+  "main": "index.js",
+  "dependencies": {
+    "@iota/converter": "^1.0.0-beta.30",
+    "@iota/core": "^1.0.0-beta.30",
+    "@iota/extract-json": "^1.0.0-beta.30"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmcanterafonseca/IOTA-Test.git"
+  },
+  "keywords": [
+    "iota",
+    "js",
+    "test"
+  ],
+  "author": "Jose M. Cantera",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jmcanterafonseca/IOTA-Test/issues"
+  },
+  "homepage": "https://github.com/jmcanterafonseca/IOTA-Test#readme"
+}
