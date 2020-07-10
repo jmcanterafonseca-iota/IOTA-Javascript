@@ -1,1 +1,1 @@
-# IOTA Tutorial Examples in Javasript
+# IOTA Tutorial Examples in Javascript
