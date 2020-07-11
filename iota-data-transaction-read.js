@@ -2,6 +2,9 @@
 const Iota = require('@iota/core');
 const Extract = require('@iota/extract-json');
 
+const DEFAULT_NETWORK = 'https://nodes.devnet.iota.org';
+const DEFAULT_TRANSACTION = 'OFCWF9UDQGFYPBQEUNDSDADGTJSL9AERTSJYSCUZYHXRVWE9YLIXG9BSETVDCTHPWNNFABACNZGRTL999';
+
 // provider: 'https://nodes.thetangle.org'
 // provider: 'https://nodes.devnet.iota.org'
 async function readIOTATransaction(iotaNetwork, tailTransactionHash) {
@@ -23,8 +26,8 @@ async function readIOTATransaction(iotaNetwork, tailTransactionHash) {
   }
 }
 
-let iotaNetwork = 'https://nodes.devnet.iota.org';
-let tailTransactionHash = 'HEVJGC9DCOCOWMOOXYZOLNNHYHPVEBI9CNAUBMALLVECCCFCYWYN9HHNLCBQGYIWJJXZE9AYPWCUAE999';
+let iotaNetwork = DEFAULT_NETWORK;
+let tailTransactionHash = DEFAULT_TRANSACTION;
 
 if (process.argv.length > 3) {
   iotaNetwork = process.argv[2];
