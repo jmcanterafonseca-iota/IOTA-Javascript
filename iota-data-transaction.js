@@ -6,11 +6,11 @@ const DEFAULT_NETWORK = 'https://nodes.devnet.iota.org';
 
 // Define a seed and an address. It does not need to belong to anyone or have IOTA tokens.
 // They must only contain a maximum of 81 trytes or 90 trytes with a valid checksum
-  const DEFAULT_ADDRESS =
-    'HEQLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWOR99D';
+const DEFAULT_ADDRESS =
+  'HEQLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWORLDHELLOWOR99D';
 
-  const seed =
-    'PUEOTSEITFEVEWCWBTSIZM9NKRGJEIMXTULBACGFRQK9IMGICLBKW9TTEVSDQMGWKBXPVCBMMCXWMNPDX';
+const seed =
+  'PUEOTSEITFEVEWCWBTSIZM9NKRGJEIMXTULBACGFRQK9IMGICLBKW9TTEVSDQMGWKBXPVCBMMCXWMNPDX';
 
 // provider: 'https://nodes.thetangle.org'
 // provider: 'https://nodes.devnet.iota.org'
@@ -26,13 +26,13 @@ async function makeIOTADataTransaction(iotaNetwork, address, message) {
 
   // Convert the message to trytes
   const messageInTrytes = Converter.asciiToTrytes(message);
-  
+
   // Define a zero-value transaction object that sends the message to the address
   const transfers = [{
-      value: 0,
-      address: address,
-      message: messageInTrytes
-    }
+    value: 0,
+    address: address,
+    message: messageInTrytes
+  }
   ];
 
   // Create a bundle from the `transfers` array and send the transaction to the node
