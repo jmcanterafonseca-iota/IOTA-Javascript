@@ -2,6 +2,9 @@
 const Iota = require('@iota/core');
 const Converter = require('@iota/converter');
 
+const depth = 3;
+const minimumWeightMagnitude = 10;
+
 const DEFAULT_NETWORK = 'https://nodes.devnet.iota.org';
 
 // Define a seed and an address. It does not need to belong to anyone or have IOTA tokens.
@@ -21,9 +24,6 @@ async function makeIOTADataTransaction(iotaNetwork, address, message) {
     provider: iotaNetwork
   });
 
-  const depth = 3;
-  const minimumWeightMagnitude = 9;
-
   // Convert the message to trytes
   const messageInTrytes = Converter.asciiToTrytes(message);
 
@@ -32,8 +32,7 @@ async function makeIOTADataTransaction(iotaNetwork, address, message) {
     value: 0,
     address: address,
     message: messageInTrytes
-  }
-  ];
+  }];
 
   // Create a bundle from the `transfers` array and send the transaction to the node
   try {
