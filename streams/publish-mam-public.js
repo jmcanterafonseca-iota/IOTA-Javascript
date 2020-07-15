@@ -11,9 +11,9 @@ const seed = 'WDSEYIDVDHGRQMVAVMRLUJZOOWDRGFVJTCIUZCDHVRADMTPJIBKKCHIVOJBRIDGMBD
 async function publish(network, packet, startIndex) {
   // Initialise MAM State
   let mamState = Mam.init(network, seed);
-  mamState.channel.start = startIndex;
+  const treeRoot = Mam.getRoot(mamState);
 
-  console.log(mamState);
+  mamState.channel.start = startIndex;
 
   // Create MAM Payload - STRING OF TRYTES
   const trytes = asciiToTrytes(packet);
@@ -23,8 +23,8 @@ async function publish(network, packet, startIndex) {
   await Mam.attach(message.payload, message.root, 3, 9);
 
   return { 
-            root: message.root, 
-            nextRoot: mamState.channel.next_root, 
+            treeRoot: treeRoot,
+            thisRoot: message.root, 
             nextIndex: mamState.channel.start 
   };
 }
@@ -32,18 +32,22 @@ async function publish(network, packet, startIndex) {
 
 if (process.argv.length >= 4) {
   const network = process.argv[2];
-  const message = JSON.stringify(JSON.parse(process.argv[3]));
+
+  const messageObj = JSON.parse(process.argv[3]);
+  messageObj.timestamp = new Date().toISOString();
+  const message = JSON.stringify(messageObj);
+
   // It might be undefined
   let startIndex = process.argv[4];
 
   startIndex = startIndex || '0';
   startIndex = parseInt(startIndex);
 
-  publish(network, message, startIndex).then(({root, nextRoot, nextIndex}) => {
+  publish(network, message, startIndex).then(({treeRoot, thisRoot, nextIndex}) => {
     const result = {
-      explorer: `${mamExplorerLink}/${root}/${mode}/${providerName}`,
-      nextIndex: nextIndex,
-      nextRoot: nextRoot
+      treeRoot: `${mamExplorerLink}/${treeRoot}/${mode}/${providerName}`,
+      thisRoot: `${mamExplorerLink}/${thisRoot}/${mode}/${providerName}`,
+      nextIndex: nextIndex
     }
     console.log(result);
   });
