@@ -35,6 +35,7 @@ if (process.argv.length >= 5) {
   const sideKey = process.argv[5];
   if (!sideKey && mode === "restricted") {
     console.error("Error: Restricted mode requires a side key");
+    process.exit(1);
   }
 
   fetchMamChannel(network, mode, root, sideKey);
