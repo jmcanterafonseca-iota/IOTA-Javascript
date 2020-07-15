@@ -6,7 +6,7 @@ const providerName = "devnet";
 const mamExplorerLink = "https://utils.iota.org/mam";
 
 const seed =
-  "SNBGLXRCLW9MYEKGEFSAUDECOYHTTWOKPVSZAWJYIJAYMCNGYIRPDLJUKZXVVWRN9ZFUPHXEGYRGOXMXH";
+  "XZZ9UHUZTRAXEMUNCNMHAVAKA9ATADSBFXYAPKNKYFGPHRDOUPBVOXTOMYFVN9K9KHAFAMVXZOOTZ9FBU";
 
 async function publish(mode, network, packet, startIndex, sideKey) {
   // Initialise MAM State
@@ -22,11 +22,11 @@ async function publish(mode, network, packet, startIndex, sideKey) {
   const message = Mam.create(mamState, trytes);
 
   // Attach the payload
-  await Mam.attach(message.payload, message.root, 3, 9);
+  await Mam.attach(message.payload, message.address, 3, 9);
 
   return {
     treeRoot,
-    thisRoot: message.root,
+    thisRoot: message.address,
     nextIndex: mamState.channel.start,
   };
 }

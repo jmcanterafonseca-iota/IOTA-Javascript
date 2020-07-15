@@ -8,12 +8,14 @@
     "@iota/core": "^1.0.0-beta.30",
     "@iota/extract-json": "^1.0.0-beta.30",
     "@iota/mam": "^0.7.3",
+    "@iota/mam.js": "^1.0.0-beta.8"
+  },
+  "devDependencies": {
     "eslint": "^7.4.0",
     "eslint-config-tamia": "^7.2.5",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.0.5"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "npm test",
     "lint": "eslint . --cache --fix",
