@@ -59,7 +59,7 @@ if (process.argv.length >= 6) {
     process.exit(1);
   }
 
-  publish({ mode, seed, network, packet: message, startIndex }).then(
+  publish({ mode, seed, network, packet: message, startIndex, sideKey }).then(
     ({ treeRoot, thisRoot, nextIndex }) => {
       const result = {
         seed,
