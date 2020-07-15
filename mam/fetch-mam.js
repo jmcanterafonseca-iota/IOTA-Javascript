@@ -3,13 +3,19 @@ const { trytesToAscii } = require("@iota/converter");
 
 const modes = ["public", "private", "restricted"];
 
-async function fetchMamChannel(network, mode, root, sideKey) {
+const INTERVAL = 3000;
+
+function fetchMamChannel(network, mode, root, sideKey) {
   // Initialise MAM State
   Mam.init(network);
 
+  retrieve(root, mode, sideKey);
+}
+
+function retrieve(root, mode, sideKey) {
   let currentRoot = root;
 
-  while (true) {
+  setInterval(async () => {
     const result = await Mam.fetch(currentRoot, mode, sideKey);
 
     result.messages.forEach((message) => {
@@ -17,7 +23,7 @@ async function fetchMamChannel(network, mode, root, sideKey) {
     });
 
     currentRoot = result.nextRoot;
-  }
+  }, INTERVAL);
 }
 
 if (process.argv.length >= 5) {

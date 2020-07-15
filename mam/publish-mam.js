@@ -62,7 +62,7 @@ if (process.argv.length >= 6) {
   publish({ mode, seed, network, packet: message, startIndex }).then(
     ({ treeRoot, thisRoot, nextIndex }) => {
       const result = {
-        seed: seed,
+        seed,
         treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
         thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
         nextIndex,
