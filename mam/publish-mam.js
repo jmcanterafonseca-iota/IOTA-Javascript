@@ -5,12 +5,13 @@ const providerName = "devnet";
 
 const mamExplorerLink = "https://utils.iota.org/mam";
 
-const seed =
-  "XZZ9UHUZTRAXEMUNCNMHAVAKA9ATADSBFXYAPKNKYFGPHRDOUPBVOXTOMYFVN9K9KHAFAMVXZOOTZ9FBU";
+const modes = ["public", "private", "restricted"];
 
-async function publish(mode, network, packet, startIndex, sideKey) {
+async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
+  // console.log("Publish: ", arguments[0]);
   // Initialise MAM State
   let mamState = Mam.init(network, seed);
+
   mamState = Mam.changeMode(mamState, mode, sideKey);
 
   const treeRoot = Mam.getRoot(mamState);
@@ -31,36 +32,37 @@ async function publish(mode, network, packet, startIndex, sideKey) {
   };
 }
 
-const modes = ["public", "private", "restricted"];
+if (process.argv.length >= 6) {
+  const seed = process.argv[2];
 
-if (process.argv.length >= 5) {
-  const mode = process.argv[2];
+  const mode = process.argv[3];
   if (modes.indexOf(mode) === -1) {
     console.error(`Error: Mode must be one of: ${modes}`);
     process.exit(1);
   }
 
-  const network = process.argv[3];
+  const network = process.argv[4];
 
-  const messageObj = JSON.parse(process.argv[4]);
+  const messageObj = JSON.parse(process.argv[5]);
   messageObj.timestamp = new Date().toISOString();
   const message = JSON.stringify(messageObj);
 
   // It might be undefined
-  let startIndex = process.argv[5];
+  let startIndex = process.argv[6];
   startIndex = startIndex || "0";
   startIndex = parseInt(startIndex);
 
   // It might be undefined
-  const sideKey = process.argv[6];
+  const sideKey = process.argv[7];
   if (mode === "restricted" && !sideKey) {
     console.error("Error: In restricted mode you need to provide a side key");
     process.exit(1);
   }
 
-  publish(mode, network, message, startIndex, sideKey).then(
+  publish({ mode, seed, network, packet: message, startIndex }).then(
     ({ treeRoot, thisRoot, nextIndex }) => {
       const result = {
+        seed: seed,
         treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
         thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
         nextIndex,
@@ -70,7 +72,7 @@ if (process.argv.length >= 5) {
   );
 } else {
   console.log(
-    "Usage: publish-mam <mode> <network> <message> <startIndex> <sideKey>"
+    "Usage: publish-mam <seed> <mode> <network> <message> <startIndex> <sideKey>"
   );
 }
 
