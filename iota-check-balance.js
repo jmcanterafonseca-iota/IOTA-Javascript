@@ -3,29 +3,27 @@
 ////////////////////////////////////////////////
 
 // Require the IOTA library
-const Iota = require('@iota/core');
+const Iota = require("@iota/core");
 
 async function checkBalance(network, address) {
   try {
     // Connect to a node
     const iota = Iota.composeAPI({
-      provider: network
+      provider: network,
     });
     const result = await iota.getBalances([address]);
 
     console.log(result.balances[0]);
-  }
-  catch (err) {
+  } catch (err) {
     console.error(err);
   }
 }
 
 if (process.argv.length >= 4) {
-  let network = process.argv[2];
-  let address = process.argv[3];
+  const network = process.argv[2];
+  const address = process.argv[3];
 
   checkBalance(network, address);
-}
-else {
+} else {
   console.log(`Usage: iota-check-balance <network> <address>`);
 }

@@ -1,16 +1,15 @@
-const Iota = require('@iota/core');
+const Iota = require("@iota/core");
 
-const DEFAULT_NETWORK = 'https://nodes.devnet.iota.org';
+const DEFAULT_NETWORK = "https://nodes.devnet.iota.org";
 
 // The seed that will be used to generate an address
 const DEFAULT_SEED =
-'PUETPSEITFEVEWCWBTSIZM9NKRGJEIMXTULBACGFRQK9IMGICLBKW9TTEVSDQMGWKBXPVCBMMCXWMNPDX';
+  "PUETPSEITFEVEWCWBTSIZM9NKRGJEIMXTULBACGFRQK9IMGICLBKW9TTEVSDQMGWKBXPVCBMMCXWMNPDX";
 
 async function generateAddress(network) {
-
   // Connect to a node
   const iota = Iota.composeAPI({
-    provider: network
+    provider: network,
   });
 
   // Define the security level of the address
@@ -21,14 +20,13 @@ async function generateAddress(network) {
   try {
     const address = await iota.getNewAddress(seed, {
       index: 1,
-      securityLevel: securityLevel,
-      total: 1
+      securityLevel,
+      total: 1,
     });
 
     console.log(`Your address is: ${address}`);
     console.log(`Address Length: ${address[0].length}`);
-  }
-  catch (err) {
+  } catch (err) {
     console.log(err);
   }
 }
