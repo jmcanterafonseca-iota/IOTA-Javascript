@@ -4,10 +4,10 @@ const { trytesToAscii } = require("@iota/converter");
 
 const modes = ["public", "private", "restricted"];
 
-const INTERVAL = 4000;
-const CHUNK_SIZE = 5;
+const INTERVAL = 5000;
+const CHUNK_SIZE = 10;
 
-function fetchMamChannel(network, mode, root, sideKey, watch) {
+function fetchMamChannel(network, mode, root, sideKey, watch, limit) {
   let doWatch = watch;
 
   if (typeof watch === "undefined") {
@@ -17,17 +17,20 @@ function fetchMamChannel(network, mode, root, sideKey, watch) {
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
-    retrieve(api, root, mode, sideKey, doWatch);
+    retrieve(api, root, mode, sideKey, doWatch, limit);
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
     process.exit(-1);
   }
 }
 
-function retrieve(api, root, mode, sideKey, watch) {
+// limit is ignored if watch is on
+function retrieve(api, root, mode, sideKey, watch, limit) {
   let currentRoot = root;
 
   let executing = false;
+
+  let total = 0;
 
   const retrievalFunction = async () => {
     if (executing === true) {
@@ -39,6 +42,8 @@ function retrieve(api, root, mode, sideKey, watch) {
     let finish = false;
 
     while (!finish) {
+      const chunkSize = Math.min(CHUNK_SIZE, limit - total);
+
       try {
         // console.log('Current Root', currentRoot);
         const fetched = await mamFetchAll(
@@ -46,7 +51,7 @@ function retrieve(api, root, mode, sideKey, watch) {
           currentRoot,
           mode,
           sideKey,
-          CHUNK_SIZE
+          chunkSize
         );
 
         fetched.forEach((result) => {
@@ -55,6 +60,10 @@ function retrieve(api, root, mode, sideKey, watch) {
 
         if (fetched.length > 0) {
           currentRoot = fetched[fetched.length - 1].nextRoot;
+          total += fetched.length;
+          if (total === limit) {
+            finish = true;
+          }
         } else {
           finish = true;
         }
@@ -63,10 +72,10 @@ function retrieve(api, root, mode, sideKey, watch) {
       } catch (error) {
         console.error("Error while fetching MAM Channel: ", error);
         finish = true;
-        executing = false;
       }
-      executing = false;
     }
+
+    executing = false;
   };
 
   if (watch === true) {
@@ -104,17 +113,23 @@ if (process.argv.length >= 5) {
     watch = true;
   }
 
-  console.log(watch);
+  let limit = -1;
 
   if (!watch) {
     // It might be undefined
     const watchParam = process.argv[6];
     if (watchParam === "-w") {
       watch = true;
+    } else {
+      // It could be a number indicating the limit of messages to be retrieved
+      limit = parseInt(watchParam);
+      if (isNaN(limit)) {
+        limit = Infinity;
+      }
     }
   }
 
-  fetchMamChannel(network, mode, root, sideKey, watch);
+  fetchMamChannel(network, mode, root, sideKey, watch, limit);
 } else {
   console.log("Usage: fetch-mam <mode> <network> <root> <sideKey> -w");
 }
