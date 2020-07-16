@@ -15,24 +15,32 @@ const modes = ["public", "private", "restricted"];
 
 async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   // console.log("Publish: ", arguments[0]);
-  // Initialise MAM State
-  const channelState = createChannel(seed, 2, mode, sideKey);
 
-  const treeRoot = channelRoot(channelState);
+  try {
+    // Initialise IOTA API
+    const api = Iota.composeAPI({ provider: network });
 
-  channelState.start = startIndex;
-  const mamMessage = createMessage(channelState, asciiToTrytes(packet));
+    // Go to the corresponding channel
+    const channelState = createChannel(seed, 2, mode, sideKey);
+    const treeRoot = channelRoot(channelState);
 
-  // And then attach the message, tagging it if required.
-  // Attaching will return the actual transactions attached to the tangle if you need them.
-  const api = Iota.composeAPI({ provider: network });
-  await mamAttach(api, mamMessage, 3, 9);
+    channelState.start = startIndex;
+    const mamMessage = createMessage(channelState, asciiToTrytes(packet));
 
-  return {
-    treeRoot,
-    thisRoot: mamMessage.address,
-    nextIndex: channelState.start,
-  };
+    // And then attach the message, tagging it if required.
+    // Attaching will return the actual transactions attached to the tangle if you need them.
+    await mamAttach(api, mamMessage, 3, 9);
+
+    return {
+      treeRoot,
+      thisRoot: mamMessage.address,
+      nextIndex: channelState.start,
+    };
+  } catch (error) {
+    console.error("Error while publishing to MAM Channel: ", error);
+    process.exit(1);
+    return -1;
+  }
 }
 
 if (process.argv.length >= 6) {
