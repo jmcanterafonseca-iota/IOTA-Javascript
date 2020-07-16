@@ -6,16 +6,10 @@ const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
 
 function fetchMamChannel(network, mode, root, sideKey, watch, limit) {
-  let doWatch = watch;
-
-  if (typeof watch === "undefined") {
-    doWatch = false;
-  }
-
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
-    retrieve(api, root, mode, sideKey, doWatch, limit);
+    retrieve(api, root, mode, sideKey, watch, limit);
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
     process.exit(-1);
