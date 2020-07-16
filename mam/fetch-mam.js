@@ -16,10 +16,10 @@ function retrieve(root, mode, sideKey) {
   let currentRoot = root;
 
   setInterval(async () => {
-    const result = await Mam.fetch(currentRoot, mode, sideKey);
+    const result = await Mam.fetch(currentRoot, mode, sideKey, null, 5);
 
     result.messages.forEach((message) => {
-      console.log(JSON.parse(trytesToAscii(message)), "\n");
+      console.log(JSON.parse(trytesToAscii(message)));
     });
 
     currentRoot = result.nextRoot;

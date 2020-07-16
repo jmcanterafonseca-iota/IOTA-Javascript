@@ -13,6 +13,6 @@ echo $network
 echo $message
 
 for i in {0..1000}
-  do echo "$i"; node mam.js/publish-mam.js $seed restricted $network "$message" $i $sideKey;
+  do echo "$i"; time node mam.js/publish-mam.js $seed restricted $network "$message" $i $sideKey;
 done
 

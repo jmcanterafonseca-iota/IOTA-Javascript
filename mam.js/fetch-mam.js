@@ -4,7 +4,8 @@ const { trytesToAscii } = require("@iota/converter");
 
 const modes = ["public", "private", "restricted"];
 
-const INTERVAL = 5000;
+const INTERVAL = 4000;
+const CHUNK_SIZE = 5;
 
 function fetchMamChannel(network, mode, root, sideKey, watch) {
   let doWatch = watch;
@@ -26,23 +27,40 @@ function fetchMamChannel(network, mode, root, sideKey, watch) {
 function retrieve(api, root, mode, sideKey, watch) {
   let currentRoot = root;
 
+  let executing = false;
+
   const retrievalFunction = async () => {
-    try {
-      // console.log('Current Root', currentRoot);
+    if (executing === true) {
+      return;
+    }
+    
+    executing = true;
 
-      const fetched = await mamFetchAll(api, currentRoot, mode, sideKey);
+    let finish = false;
 
-      fetched.forEach((result) => {
-        console.log(JSON.parse(trytesToAscii(result.message)));
-      });
+    while(!finish) {
+      try {
+        // console.log('Current Root', currentRoot);
+        const fetched = await mamFetchAll(api, currentRoot, mode, sideKey, CHUNK_SIZE);
 
-      if (fetched.length > 0) {
-        currentRoot = fetched[fetched.length - 1].nextRoot;
+        fetched.forEach((result) => {
+          console.log(JSON.parse(trytesToAscii(result.message)));
+        });
+
+        if (fetched.length > 0) {
+          currentRoot = fetched[fetched.length - 1].nextRoot;
+        }
+        else {
+          finish = true;
+        }
+
+        // console.log('Current Root', currentRoot);
+      } catch (error) {
+        console.error("Error while fetching MAM Channel: ", error);
+        finish = true;
+        executing = false;
       }
-
-      // console.log('Current Root', currentRoot);
-    } catch (error) {
-      console.error("Error while fetching MAM Channel: ", error);
+      executing = false;
     }
   };
 
@@ -80,6 +98,8 @@ if (process.argv.length >= 5) {
     sideKey = null;
     watch = true;
   }
+
+  console.log(watch);
 
   if (!watch) {
     // It might be undefined
