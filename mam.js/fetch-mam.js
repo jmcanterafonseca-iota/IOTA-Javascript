@@ -33,15 +33,21 @@ function retrieve(api, root, mode, sideKey, watch) {
     if (executing === true) {
       return;
     }
-    
+
     executing = true;
 
     let finish = false;
 
-    while(!finish) {
+    while (!finish) {
       try {
         // console.log('Current Root', currentRoot);
-        const fetched = await mamFetchAll(api, currentRoot, mode, sideKey, CHUNK_SIZE);
+        const fetched = await mamFetchAll(
+          api,
+          currentRoot,
+          mode,
+          sideKey,
+          CHUNK_SIZE
+        );
 
         fetched.forEach((result) => {
           console.log(JSON.parse(trytesToAscii(result.message)));
@@ -49,8 +55,7 @@ function retrieve(api, root, mode, sideKey, watch) {
 
         if (fetched.length > 0) {
           currentRoot = fetched[fetched.length - 1].nextRoot;
-        }
-        else {
+        } else {
           finish = true;
         }
 
