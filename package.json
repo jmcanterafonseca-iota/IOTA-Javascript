@@ -8,7 +8,8 @@
     "@iota/core": "^1.0.0-beta.30",
     "@iota/extract-json": "^1.0.0-beta.30",
     "@iota/mam": "^0.7.3",
-    "@iota/mam.js": "^1.0.0-beta.8"
+    "@iota/mam.js": "^1.0.0-beta.8",
+    "yargs": "^15.4.1"
   },
   "devDependencies": {
     "eslint": "^7.4.0",

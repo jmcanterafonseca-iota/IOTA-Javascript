@@ -2,8 +2,6 @@ const Iota = require("@iota/core");
 const { mamFetchAll } = require("@iota/mam.js");
 const { trytesToAscii } = require("@iota/converter");
 
-const modes = ["public", "private", "restricted"];
-
 const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
 
@@ -46,6 +44,8 @@ function retrieve(api, root, mode, sideKey, watch, limit) {
 
       try {
         // console.log('Current Root', currentRoot);
+
+        // eslint-disable-next-line no-await-in-loop
         const fetched = await mamFetchAll(
           api,
           currentRoot,
@@ -85,51 +85,79 @@ function retrieve(api, root, mode, sideKey, watch, limit) {
   }
 }
 
-if (process.argv.length >= 5) {
-  const network = process.argv[3];
-
-  let watch = false;
-
-  const mode = process.argv[2];
-  if (modes.indexOf(mode) === -1) {
-    console.error(`Error: Mode must be one of: ${modes}`);
-    process.exit(1);
-  }
-
-  const root = process.argv[4];
-
-  // It might be undefined or the watch flag
-  let sideKey = process.argv[5];
-  if (!sideKey) {
-    if (mode === "restricted") {
-      console.error("Error: Restricted mode requires a side key");
-      process.exit(1);
+const argv = require("yargs")
+  .option("watch", {
+    alias: "w",
+    type: "boolean",
+    default: false,
+    description: "Watch the MAM Channel",
+  })
+  .option("net", {
+    alias: "n",
+    type: "string",
+    description: "IOTA Network",
+  })
+  .option("devnet", {
+    type: "boolean",
+    description: "IOTA Devnet",
+  })
+  .option("comnet", {
+    type: "boolean",
+    description: "IOTA Comnet",
+  })
+  .option("mode", {
+    alias: "m",
+    type: "string",
+    description: "MAM Channel mode",
+    choices: ["public", "private", "restricted"],
+  })
+  .option("root", {
+    alias: "r",
+    type: "string",
+    description: "MAM Channel's root",
+  })
+  .option("sidekey", {
+    type: "string",
+    description: "Sidekey for restricted channels",
+    default: null,
+  })
+  .option("limit", {
+    alias: "l",
+    type: "number",
+    description: "Maximum number of messages to be fetched",
+    default: Infinity,
+  })
+  .help()
+  .demandOption(["mode", "root"])
+  .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
+  // eslint-disable-next-line no-shadow
+  .check((argv) => {
+    if (argv.mode === "restricted" && !argv.sidekey) {
+      throw new Error("Missing sidekey for fetching a MAM restricted channel");
     }
-  } else if (sideKey === "-w" && mode === "restricted") {
-    console.error("Error: Restricted mode requires a side key");
-    process.exit(1);
-  } else if (sideKey === "-w") {
-    sideKey = null;
-    watch = true;
-  }
-
-  let limit = -1;
-
-  if (!watch) {
-    // It might be undefined
-    const watchParam = process.argv[6];
-    if (watchParam === "-w") {
-      watch = true;
+    if (!argv.net && !argv.devnet && !argv.comnet) {
+      throw new Error(
+        "Missing network. Use --devnet, --comnet or provide a custom URL using --net"
+      );
     } else {
-      // It could be a number indicating the limit of messages to be retrieved
-      limit = parseInt(watchParam);
-      if (isNaN(limit)) {
-        limit = Infinity;
-      }
+      return true;
     }
-  }
+  }).argv;
 
-  fetchMamChannel(network, mode, root, sideKey, watch, limit);
-} else {
-  console.log("Usage: fetch-mam <mode> <network> <root> <sideKey> -w");
+let network = argv.net;
+
+if (argv.devnet) {
+  network = "https://nodes.devnet.iota.org";
 }
+
+if (argv.comnet) {
+  network = "https://nodes.comnet.thetangle.org";
+}
+
+const mode = argv.mode;
+const root = argv.root;
+const sideKey = argv.sidekey;
+const watch = argv.watch;
+const limit = argv.limit;
+
+fetchMamChannel(network, mode, root, sideKey, watch, limit);
