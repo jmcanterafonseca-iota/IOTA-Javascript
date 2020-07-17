@@ -130,26 +130,28 @@ async function main() {
   const startIndex = argv.index;
   const sideKey = argv.sidekey;
 
-  await publish({
+  const { treeRoot, thisRoot, nextIndex } = await publish({
     mode,
     seed,
     network,
     packet: message,
     startIndex,
     sideKey,
-  }).then(({ treeRoot, thisRoot, nextIndex }) => {
-    const result = {
-      seed,
-      treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
-      thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
-      nextIndex,
-    };
-    console.log(result);
   });
+
+  const result = {
+    seed,
+    treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
+    thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
+    nextIndex,
+  };
+
+  return result;
 }
 
 main().then(
-  () => {
+  (result) => {
+    console.log(result);
     process.exit(0);
   },
   (error) => {
@@ -157,3 +159,8 @@ main().then(
     process.exit(1);
   }
 );
+
+process.on("uncaughtException", (err) => {
+  // handle the error safely
+  console.error(err);
+});

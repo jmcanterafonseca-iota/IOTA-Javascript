@@ -5,19 +5,19 @@ const { trytesToAscii } = require("@iota/converter");
 const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
 
-function fetchMamChannel(network, mode, root, sideKey, watch, limit) {
+async function fetchMamChannel(network, mode, root, sideKey, watch, limit) {
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
-    retrieve(api, root, mode, sideKey, watch, limit);
+    return await retrieve(api, root, mode, sideKey, watch, limit);
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
-    process.exit(-1);
+    return null;
   }
 }
 
 // limit is ignored if watch is on
-function retrieve(api, root, mode, sideKey, watch, limit) {
+async function retrieve(api, root, mode, sideKey, watch, limit) {
   let currentRoot = root;
 
   let executing = false;
@@ -72,11 +72,14 @@ function retrieve(api, root, mode, sideKey, watch, limit) {
     executing = false;
   };
 
+  await retrievalFunction();
+
+  let intervalId;
   if (watch === true) {
-    setInterval(retrievalFunction, INTERVAL);
-  } else {
-    retrievalFunction();
+    intervalId = setInterval(retrievalFunction, INTERVAL);
   }
+
+  return intervalId;
 }
 
 const argv = require("yargs")
@@ -138,20 +141,48 @@ const argv = require("yargs")
     }
   }).argv;
 
-let network = argv.net;
+async function main() {
+  let network = argv.net;
 
-if (argv.devnet) {
-  network = "https://nodes.devnet.iota.org";
+  if (argv.devnet) {
+    network = "https://nodes.devnet.iota.org";
+  }
+
+  if (argv.comnet) {
+    network = "https://nodes.comnet.thetangle.org";
+  }
+
+  const mode = argv.mode;
+  const root = argv.root;
+  const sideKey = argv.sidekey;
+  const watch = argv.watch;
+  const limit = argv.limit;
+
+  return await fetchMamChannel(network, mode, root, sideKey, watch, limit);
 }
 
-if (argv.comnet) {
-  network = "https://nodes.comnet.thetangle.org";
-}
+let globalIntervalId;
 
-const mode = argv.mode;
-const root = argv.root;
-const sideKey = argv.sidekey;
-const watch = argv.watch;
-const limit = argv.limit;
+main().then(
+  (intervalId) => {
+    globalIntervalId = intervalId;
+    if (!intervalId) {
+      process.exit(0);
+    }
+  },
+  (error) => {
+    console.error("Error: ", error);
+    process.exit(1);
+  }
+);
 
-fetchMamChannel(network, mode, root, sideKey, watch, limit);
+process.on("uncaughtException", (err) => {
+  // handle the error safely
+  console.error(err);
+});
+
+process.on("SIGINT", () => {
+  if (globalIntervalId) {
+    clearInterval(globalIntervalId);
+  }
+});
