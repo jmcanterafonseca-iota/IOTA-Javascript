@@ -170,6 +170,7 @@ process.on("SIGINT", () => {
   if (globalIntervalId) {
     clearInterval(globalIntervalId);
   }
+  process.exit(1);
 });
 
 let globalIntervalId;
