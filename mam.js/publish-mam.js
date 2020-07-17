@@ -11,8 +11,6 @@ const providerName = "devnet";
 
 const mamExplorerLink = "https://utils.iota.org/mam";
 
-const modes = ["public", "private", "restricted"];
-
 async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   // console.log("Publish: ", arguments[0]);
 
@@ -43,49 +41,66 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   }
 }
 
-if (process.argv.length >= 6) {
-  const seed = process.argv[2];
-
-  const mode = process.argv[3];
-  if (modes.indexOf(mode) === -1) {
-    console.error(`Error: Mode must be one of: ${modes}`);
-    process.exit(1);
-  }
-
-  const network = process.argv[4];
-
-  const messageObj = JSON.parse(process.argv[5]);
-  messageObj.timestamp = new Date().toISOString();
-  const message = JSON.stringify(messageObj);
-
-  // It might be undefined
-  let startIndex = process.argv[6];
-  startIndex = startIndex || "0";
-  startIndex = parseInt(startIndex);
-
-  // It might be undefined
-  const sideKey = process.argv[7];
-  if (mode === "restricted" && !sideKey) {
-    console.error("Error: In restricted mode you need to provide a side key");
-    process.exit(1);
-  }
-
-  publish({ mode, seed, network, packet: message, startIndex, sideKey }).then(
-    ({ treeRoot, thisRoot, nextIndex }) => {
-      const result = {
-        seed,
-        treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
-        thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
-        nextIndex,
-      };
-      console.log(result);
+const argv = require("yargs")
+  .option("seed", {
+    alias: "s",
+    type: "string",
+    description: "IOTA Seed",
+  })
+  .option("net", {
+    alias: "n",
+    type: "string",
+    description: "IOTA Network",
+  })
+  .option("devnet", {
+    type: "boolean",
+    description: "IOTA Devnet",
+  })
+  .option("comnet", {
+    type: "boolean",
+    description: "IOTA Comnet",
+  })
+  .option("mode", {
+    alias: "m",
+    type: "string",
+    description: "MAM Channel mode",
+    choices: ["public", "private", "restricted"],
+  })
+  .option("message", {
+    alias: "msg",
+    type: "string",
+    description: "JSON message to be published",
+  })
+  .option("index", {
+    alias: "i",
+    type: "number",
+    default: 0,
+    description: "Start index used to publish",
+  })
+  .option("sidekey", {
+    type: "string",
+    alias: "sk",
+    description: "Side key for restricted channels",
+    default: null,
+  })
+  .help()
+  .demandOption(["seed", "mode", "message"])
+  .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
+  // eslint-disable-next-line no-shadow
+  .check((argv) => {
+    if (argv.mode === "restricted" && !argv.sidekey) {
+      throw new Error(
+        "Missing sidekey for publishing to a MAM restricted channel"
+      );
     }
-  );
-} else {
-  console.log(
-    "Usage: publish-mam <seed> <mode> <network> <message> <startIndex> <sideKey>"
-  );
-}
+    if (!argv.net && !argv.devnet && !argv.comnet) {
+      throw new Error(
+        "Missing network. Use --devnet, --comnet or provide a custom URL using --net"
+      );
+    } else {
+      return true;
+    }
+  }).argv;
 
 function formatExplorerURI(mode, root, sideKey) {
   if (!sideKey) {
@@ -94,3 +109,51 @@ function formatExplorerURI(mode, root, sideKey) {
     return `${mamExplorerLink}/${root}/${mode}/${sideKey}/${providerName}`;
   }
 }
+
+async function main() {
+  let network = argv.net;
+
+  if (argv.devnet) {
+    network = "https://nodes.devnet.iota.org";
+  }
+
+  if (argv.comnet) {
+    network = "https://nodes.comnet.thetangle.org";
+  }
+
+  const seed = argv.seed;
+  const mode = argv.mode;
+
+  const messageObj = JSON.parse(argv.message);
+  messageObj.timestamp = new Date().toISOString();
+  const message = JSON.stringify(messageObj);
+  const startIndex = argv.index;
+  const sideKey = argv.sidekey;
+
+  await publish({
+    mode,
+    seed,
+    network,
+    packet: message,
+    startIndex,
+    sideKey,
+  }).then(({ treeRoot, thisRoot, nextIndex }) => {
+    const result = {
+      seed,
+      treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
+      thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
+      nextIndex,
+    };
+    console.log(result);
+  });
+}
+
+main().then(
+  () => {
+    process.exit(0);
+  },
+  (error) => {
+    console.error("Error:", error);
+    process.exit(1);
+  }
+);
