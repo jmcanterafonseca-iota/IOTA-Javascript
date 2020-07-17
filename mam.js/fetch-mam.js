@@ -161,6 +161,17 @@ async function main() {
   return await fetchMamChannel(network, mode, root, sideKey, watch, limit);
 }
 
+process.on("uncaughtException", (err) => {
+  // handle the error safely
+  console.error(err);
+});
+
+process.on("SIGINT", () => {
+  if (globalIntervalId) {
+    clearInterval(globalIntervalId);
+  }
+});
+
 let globalIntervalId;
 
 main().then(
@@ -175,14 +186,3 @@ main().then(
     process.exit(1);
   }
 );
-
-process.on("uncaughtException", (err) => {
-  // handle the error safely
-  console.error(err);
-});
-
-process.on("SIGINT", () => {
-  if (globalIntervalId) {
-    clearInterval(globalIntervalId);
-  }
-});

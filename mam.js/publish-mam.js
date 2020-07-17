@@ -164,6 +164,11 @@ async function main() {
   return result;
 }
 
+process.on("uncaughtException", (err) => {
+  // handle the error safely
+  console.error(err);
+});
+
 main().then(
   (result) => {
     console.log(result);
@@ -174,8 +179,3 @@ main().then(
     process.exit(1);
   }
 );
-
-process.on("uncaughtException", (err) => {
-  // handle the error safely
-  console.error(err);
-});
