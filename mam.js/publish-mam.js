@@ -7,9 +7,16 @@ const {
 } = require("@iota/mam.js");
 const { asciiToTrytes } = require("@iota/converter");
 
-const providerName = "devnet";
-
 const mamExplorerLink = "https://utils.iota.org/mam";
+
+const COMNET_URL = "https://nodes.comnet.thetangle.org";
+const DEVNET_URL = "https://nodes.devnet.iota.org";
+
+const providers = Object.create(null);
+providers[DEVNET_URL] = "devnet";
+providers[COMNET_URL] = "comnet";
+
+let minWeightMagnitude = 9;
 
 async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   // console.log("Publish: ", arguments[0]);
@@ -27,7 +34,7 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
 
     // And then attach the message, tagging it if required.
     // Attaching will return the actual transactions attached to the tangle if you need them.
-    await mamAttach(api, mamMessage, 3, 9);
+    await mamAttach(api, mamMessage, 3, minWeightMagnitude);
 
     return {
       treeRoot,
@@ -41,12 +48,18 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   }
 }
 
-function formatExplorerURI(mode, root, sideKey) {
+function formatExplorerURI(mode, root, sideKey, network) {
   if (!sideKey) {
-    return `${mamExplorerLink}/${root}/${mode}/${providerName}`;
+    return `${mamExplorerLink}/${root}/${mode}/${providerName(network)}`;
   } else {
-    return `${mamExplorerLink}/${root}/${mode}/${sideKey}/${providerName}`;
+    return `${mamExplorerLink}/${root}/${mode}/${sideKey}/${providerName(
+      network
+    )}`;
   }
+}
+
+function providerName(network) {
+  return providers[network];
 }
 
 const argv = require("yargs")
@@ -114,11 +127,12 @@ async function main() {
   let network = argv.net;
 
   if (argv.devnet) {
-    network = "https://nodes.devnet.iota.org";
+    network = DEVNET_URL;
   }
 
   if (argv.comnet) {
-    network = "https://nodes.comnet.thetangle.org";
+    network = COMNET_URL;
+    minWeightMagnitude = 10;
   }
 
   const seed = argv.seed;
@@ -127,6 +141,7 @@ async function main() {
   const messageObj = JSON.parse(argv.message);
   messageObj.timestamp = new Date().toISOString();
   const message = JSON.stringify(messageObj);
+
   const startIndex = argv.index;
   const sideKey = argv.sidekey;
 
@@ -139,10 +154,12 @@ async function main() {
     sideKey,
   });
 
+  console.log(network);
+
   const result = {
     seed,
-    treeRoot: formatExplorerURI(mode, treeRoot, sideKey),
-    thisRoot: formatExplorerURI(mode, thisRoot, sideKey),
+    treeRoot: formatExplorerURI(mode, treeRoot, sideKey, network),
+    thisRoot: formatExplorerURI(mode, thisRoot, sideKey, network),
     nextIndex,
   };
 
