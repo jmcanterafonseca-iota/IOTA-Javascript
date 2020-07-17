@@ -154,8 +154,6 @@ async function main() {
     sideKey,
   });
 
-  console.log(network);
-
   const result = {
     seed,
     treeRoot: formatExplorerURI(mode, treeRoot, sideKey, network),

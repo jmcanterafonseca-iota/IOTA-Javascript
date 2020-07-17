@@ -12,7 +12,7 @@ echo $sideKey
 echo $network
 echo $message
 
-for i in {0..1000}
-  do echo "$i"; time node mam.js/publish-mam.js $seed restricted $network "$message" $i $sideKey;
+for i in {0..300}
+  do echo "$i"; time node mam.js/publish-mam.js --seed=$seed --mode=restricted --devnet --message="$message" --index=$i --sidekey=$sideKey;
 done
 
