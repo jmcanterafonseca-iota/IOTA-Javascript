@@ -41,6 +41,14 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
   }
 }
 
+function formatExplorerURI(mode, root, sideKey) {
+  if (!sideKey) {
+    return `${mamExplorerLink}/${root}/${mode}/${providerName}`;
+  } else {
+    return `${mamExplorerLink}/${root}/${mode}/${sideKey}/${providerName}`;
+  }
+}
+
 const argv = require("yargs")
   .option("seed", {
     alias: "s",
@@ -101,14 +109,6 @@ const argv = require("yargs")
       return true;
     }
   }).argv;
-
-function formatExplorerURI(mode, root, sideKey) {
-  if (!sideKey) {
-    return `${mamExplorerLink}/${root}/${mode}/${providerName}`;
-  } else {
-    return `${mamExplorerLink}/${root}/${mode}/${sideKey}/${providerName}`;
-  }
-}
 
 async function main() {
   let network = argv.net;
