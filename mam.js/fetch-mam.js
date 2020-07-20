@@ -1,24 +1,66 @@
 const Iota = require("@iota/core");
-const { mamFetchAll } = require("@iota/mam.js");
-const { trytesToAscii } = require("@iota/converter");
+const { mamFetchAll, createChannel, channelRoot } = require("@iota/mam.js");
+const { trytesToAscii, asciiToTrytes } = require("@iota/converter");
 
 const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
 
-async function fetchMamChannel(network, mode, root, sideKey, watch, limit) {
+async function fetchMamChannel({
+  network,
+  mode,
+  root,
+  from,
+  sideKey,
+  watch,
+  limit,
+  seed,
+}) {
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
-    return await retrieve(api, root, mode, sideKey, watch, limit);
+    return await retrieve({
+      api,
+      root,
+      mode,
+      sideKey,
+      watch,
+      limit,
+      from,
+      seed,
+    });
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
     return null;
   }
 }
 
+/* Calculates the start root. from can be different than 0 and in that case a seed has to be provided */
+function startRoot({ root, seed, mode, from, sideKey }) {
+  if (typeof from === "undefined" && root) {
+    return root;
+  } else {
+    if (typeof from === "undefined") {
+      from = 0;
+    }
+    const channelState = createChannel(seed, 2, mode, sideKey);
+    channelState.start = from;
+
+    return channelRoot(channelState);
+  }
+}
+
 // limit is ignored if watch is on
-async function retrieve(api, root, mode, sideKey, watch, limit) {
-  let currentRoot = root;
+async function retrieve({
+  api,
+  root,
+  mode,
+  sideKey,
+  watch,
+  limit,
+  from,
+  seed,
+}) {
+  let currentRoot = startRoot({ root, seed, mode, from, sideKey });
 
   let executing = false;
 
@@ -124,8 +166,18 @@ const argv = require("yargs")
     description: "Maximum number of messages to be fetched",
     default: Infinity,
   })
+  .option("from", {
+    alias: "f",
+    type: "number",
+    description: "Start Index for retrieval",
+  })
+  .option("seed", {
+    alias: "s",
+    type: "string",
+    description: "MAM Channel's seed",
+  })
   .help()
-  .demandOption(["mode", "root"])
+  .demandOption(["mode"])
   .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
   // eslint-disable-next-line no-shadow
   .check((argv) => {
@@ -136,9 +188,21 @@ const argv = require("yargs")
       throw new Error(
         "Missing network. Use --devnet, --comnet or provide a custom URL using --net"
       );
-    } else {
-      return true;
     }
+    if (typeof argv.from !== "undefined" && !argv.seed) {
+      throw new Error(
+        "Missing seed. Seed must be provided when start index (from) is provided"
+      );
+    }
+    if (typeof argv.from !== "undefined" && argv.root) {
+      throw new Error(
+        "Start index (from) and MAM Channel root are incompatible parameters"
+      );
+    }
+    if (typeof argv.from === "undefined" && !argv.root && !argv.seed) {
+      throw new Error("Missing MAM Channel's root or seed");
+    }
+    return true;
   }).argv;
 
 async function main() {
@@ -158,7 +222,19 @@ async function main() {
   const watch = argv.watch;
   const limit = argv.limit;
 
-  return await fetchMamChannel(network, mode, root, sideKey, watch, limit);
+  const from = argv.from;
+  const seed = argv.seed;
+
+  return await fetchMamChannel({
+    network,
+    mode,
+    root,
+    from,
+    sideKey,
+    watch,
+    limit,
+    seed,
+  });
 }
 
 process.on("uncaughtException", (err) => {
