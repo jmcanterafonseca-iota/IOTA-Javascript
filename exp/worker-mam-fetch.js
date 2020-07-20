@@ -1,6 +1,7 @@
 const Iota = require("@iota/core");
 const { mamFetchAll, createChannel, channelRoot } = require("@iota/mam.js");
 const { trytesToAscii } = require("@iota/converter");
+const { parentPort } = require("worker_threads");
 
 const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
@@ -91,7 +92,7 @@ async function retrieve({
         );
 
         fetched.forEach((result) => {
-          console.log(JSON.parse(trytesToAscii(result.message)));
+          parentPort.postMessage(JSON.parse(trytesToAscii(result.message)));
         });
 
         if (fetched.length > 0) {
@@ -124,101 +125,11 @@ async function retrieve({
   return intervalId;
 }
 
-const argv = require("yargs")
-  .option("watch", {
-    alias: "w",
-    type: "boolean",
-    default: false,
-    description: "Watch the MAM Channel",
-  })
-  .option("net", {
-    alias: "n",
-    type: "string",
-    description: "IOTA Network",
-  })
-  .option("devnet", {
-    type: "boolean",
-    description: "IOTA Devnet",
-  })
-  .option("comnet", {
-    type: "boolean",
-    description: "IOTA Comnet",
-  })
-  .option("mode", {
-    alias: "m",
-    type: "string",
-    description: "MAM Channel mode",
-    choices: ["public", "private", "restricted"],
-  })
-  .option("root", {
-    alias: "r",
-    type: "string",
-    description: "MAM Channel's root",
-  })
-  .option("sidekey", {
-    type: "string",
-    description: "Sidekey for restricted channels",
-    default: null,
-  })
-  .option("limit", {
-    alias: "l",
-    type: "number",
-    description: "Maximum number of messages to be fetched",
-    default: Infinity,
-  })
-  .option("from", {
-    alias: "f",
-    type: "number",
-    description: "Start Index for retrieval",
-  })
-  .option("seed", {
-    alias: "s",
-    type: "string",
-    description: "MAM Channel's seed",
-  })
-  .help()
-  .demandOption(["mode"])
-  .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
-  // eslint-disable-next-line no-shadow
-  .check((argv) => {
-    if (argv.mode === "restricted" && !argv.sidekey) {
-      throw new Error("Missing sidekey for fetching a MAM restricted channel");
-    }
-    if (!argv.net && !argv.devnet && !argv.comnet) {
-      throw new Error(
-        "Missing network. Use --devnet, --comnet or provide a custom URL using --net"
-      );
-    }
-    if (typeof argv.from !== "undefined" && !argv.seed) {
-      throw new Error(
-        "Missing seed. Seed must be provided when start index (from) is provided"
-      );
-    }
-    if (typeof argv.from !== "undefined" && argv.root) {
-      throw new Error(
-        "Start index (from) and MAM Channel root are incompatible parameters"
-      );
-    }
-    if (typeof argv.from === "undefined" && !argv.root && !argv.seed) {
-      throw new Error("Missing MAM Channel's root or seed");
-    }
-    return true;
-  }).argv;
-
-async function main() {
-  let network = argv.net;
-
-  if (argv.devnet) {
-    network = "https://nodes.devnet.iota.org";
-  }
-
-  if (argv.comnet) {
-    network = "https://nodes.comnet.thetangle.org";
-  }
-
+async function main(argv) {
+  const network = argv.network;
   const mode = argv.mode;
   const root = argv.root;
-  const sideKey = argv.sidekey;
+  const sideKey = argv.sideKey;
   const watch = argv.watch;
   const limit = argv.limit;
 
@@ -251,15 +162,17 @@ process.on("SIGINT", () => {
 
 let globalIntervalId;
 
-main().then(
-  (intervalId) => {
-    globalIntervalId = intervalId;
-    if (!intervalId) {
-      process.exit(0);
+parentPort.once("message", (argv) => {
+  main(argv).then(
+    (intervalId) => {
+      globalIntervalId = intervalId;
+      if (!intervalId) {
+        process.exit(0);
+      }
+    },
+    (error) => {
+      console.error("Error: ", error);
+      process.exit(1);
     }
-  },
-  (error) => {
-    console.error("Error: ", error);
-    process.exit(1);
-  }
-);
+  );
+});
