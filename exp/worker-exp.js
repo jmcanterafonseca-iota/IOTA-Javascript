@@ -1,5 +1,10 @@
 const { Worker } = require("worker_threads");
 
+// Default Maximum number of workers launched
+const MAX_WORKERS = 5;
+// Ideal chunk per worker
+const CHUNK_PER_WORKER = 10;
+
 const argv = require("yargs")
   .option("watch", {
     alias: "w",
@@ -54,12 +59,12 @@ const argv = require("yargs")
   })
   .option("workers", {
     type: "number",
-    default: 7,
+    default: MAX_WORKERS,
     description: "Number of workers",
   })
   .option("chunksize", {
     type: "number",
-    default: 10,
+    default: CHUNK_PER_WORKER,
     description: "Chunk size for retrieval",
   })
   .help()
@@ -90,11 +95,6 @@ const argv = require("yargs")
     }
     return true;
   }).argv;
-
-// Default Maximum number of workers launched
-const MAX_WORKERS = 7;
-// Ideal chunk per worker
-const CHUNK_PER_WORKER = 10;
 
 function main() {
   let network = argv.net;
