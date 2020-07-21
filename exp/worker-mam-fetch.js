@@ -51,38 +51,24 @@ function startRoot({ root, seed, mode, from, sideKey }) {
 }
 
 // limit is ignored if watch is on
-async function retrieve({
-  api,
-  root,
-  mode,
-  sideKey,
-  watch,
-  limit,
-  from,
-  seed,
-}) {
-  let currentRoot = startRoot({ root, seed, mode, from, sideKey });
+function retrieve({ api, root, mode, sideKey, watch, limit, from, seed }) {
+  return new Promise((resolve, reject) => {
+    let currentRoot = startRoot({ root, seed, mode, from, sideKey });
 
-  let executing = false;
+    let total = 0;
 
-  let total = 0;
+    let executing = false;
 
-  const retrievalFunction = async () => {
-    if (executing === true) {
-      return;
-    }
+    const retrievalFunction = async () => {
+      if (executing === true) {
+        return;
+      }
 
-    executing = true;
+      executing = true;
 
-    let finish = false;
-
-    while (!finish) {
       const chunkSize = Math.min(CHUNK_SIZE, limit - total);
 
       try {
-        // console.log('Current Root', currentRoot);
-
-        // eslint-disable-next-line no-await-in-loop
         const fetched = await mamFetchAll(
           api,
           currentRoot,
@@ -92,37 +78,33 @@ async function retrieve({
         );
 
         fetched.forEach((result) => {
-          parentPort.postMessage(JSON.parse(trytesToAscii(result.message)));
+          console.log(JSON.parse(trytesToAscii(result.message)));
         });
 
         if (fetched.length > 0) {
           currentRoot = fetched[fetched.length - 1].nextRoot;
-          total += fetched.length;
-          if (total === limit) {
-            finish = true;
-          }
-        } else {
-          finish = true;
-        }
 
+          total += fetched.length;
+          if (total < limit) {
+            setImmediate(retrievalFunction);
+          }
+        } else if (watch === true && !globalIntervalId) {
+          const intervalId = setInterval(retrievalFunction, INTERVAL);
+          resolve(intervalId);
+        } else {
+          resolve();
+        }
         // console.log('Current Root', currentRoot);
       } catch (error) {
         console.error("Error while fetching MAM Channel: ", error);
-        finish = true;
+        reject(error);
+      } finally {
+        executing = false;
       }
-    }
+    };
 
-    executing = false;
-  };
-
-  await retrievalFunction();
-
-  let intervalId;
-  if (watch === true) {
-    intervalId = setInterval(retrievalFunction, INTERVAL);
-  }
-
-  return intervalId;
+    setImmediate(retrievalFunction);
+  }); // end of promise
 }
 
 async function main(argv) {
