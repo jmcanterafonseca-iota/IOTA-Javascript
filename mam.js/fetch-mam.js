@@ -1,5 +1,10 @@
 const Iota = require("@iota/core");
-const { mamFetchAll, createChannel, channelRoot } = require("@iota/mam.js");
+const {
+  mamFetchAll,
+  createChannel,
+  channelRoot,
+  mamFetchCombined,
+} = require("@iota/mam.js");
 const { trytesToAscii } = require("@iota/converter");
 
 const INTERVAL = 5000;
@@ -15,10 +20,24 @@ async function fetchMamChannel({
   limit,
   seed,
   maxChunkSize,
+  partitions,
 }) {
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
+
+    if (partitions > 1) {
+      return await retrievePartitionedCombined({
+        api,
+        mode,
+        sideKey,
+        limit,
+        from,
+        seed,
+        partitions,
+      });
+    }
+
     return await retrieve({
       api,
       root,
@@ -49,6 +68,87 @@ function startRoot({ root, seed, mode, from, sideKey }) {
 
     return channelRoot(channelState);
   }
+}
+
+// Partitions a MAM Channel with the size specified
+function createPartitions({ from, seed, partitionSize, sideKey, limit, mode }) {
+  const partitions = [];
+
+  let current = from;
+  while (current < limit) {
+    const channelState = createChannel(seed, 2, mode, sideKey);
+
+    channelState.start = current;
+
+    const channelDetails = {
+      root: channelRoot(channelState),
+      mode,
+      sideKey,
+    };
+    partitions.push(channelDetails);
+
+    current += partitionSize;
+  }
+
+  return partitions;
+}
+
+function retrievePartitionedCombined({
+  api,
+  mode,
+  sideKey,
+  limit,
+  from,
+  seed,
+  partitions,
+}) {
+  return new Promise((resolve, reject) => {
+    let partitionSize = Math.floor(limit / partitions);
+
+    if (partitionSize === 0) {
+      partitionSize = limit;
+    }
+
+    if (typeof from === "undefined") {
+      from = 0;
+    }
+
+    const channels = createPartitions({
+      from,
+      seed,
+      partitionSize,
+      sideKey,
+      limit,
+      mode,
+    });
+
+    let total = 0;
+
+    const retrievalFunction = async () => {
+      try {
+        const fetched = await mamFetchCombined(api, channels);
+
+        for (let k = 0; k < fetched.length; k++) {
+          console.log(JSON.parse(trytesToAscii(fetched[k].message)));
+          channels[k].root = fetched[k].nextRoot;
+        }
+
+        if (fetched.length > 0) {
+          total += fetched.length;
+          if (total < limit) {
+            setImmediate(retrievalFunction);
+          }
+        } else {
+          resolve();
+        }
+      } catch (error) {
+        console.error("Error while fetching MAM Channel: ", error);
+        reject(error);
+      }
+    };
+
+    setImmediate(retrievalFunction);
+  });
 }
 
 // limit is ignored if watch is on
@@ -172,6 +272,11 @@ const argv = require("yargs")
     type: "number",
     description: "Chunksize for retrieval",
   })
+  .option("partitions", {
+    type: "number",
+    description: "Number of partitions to use when fetching",
+    default: 1,
+  })
   .help()
   .demandOption(["mode"])
   .conflicts({
@@ -179,6 +284,7 @@ const argv = require("yargs")
     comnet: ["devnet", "net"],
     root: ["from"],
     limit: ["watch"],
+    partitions: ["watch"],
   })
   // eslint-disable-next-line no-shadow
   .check((argv) => {
@@ -226,6 +332,8 @@ async function main() {
 
   const maxChunkSize = argv.chunksize || CHUNK_SIZE;
 
+  const partitions = argv.partitions;
+
   return await fetchMamChannel({
     network,
     mode,
@@ -236,6 +344,7 @@ async function main() {
     limit,
     seed,
     maxChunkSize,
+    partitions,
   });
 }
 
