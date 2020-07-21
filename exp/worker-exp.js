@@ -52,6 +52,16 @@ const argv = require("yargs")
     type: "string",
     description: "MAM Channel's seed",
   })
+  .option("workers", {
+    type: "number",
+    default: 7,
+    description: "Number of workers",
+  })
+  .option("chunksize", {
+    type: "number",
+    default: 10,
+    description: "Chunk size for retrieval",
+  })
   .help()
   .demandOption(["mode"])
   .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
@@ -81,6 +91,11 @@ const argv = require("yargs")
     return true;
   }).argv;
 
+// Default Maximum number of workers launched
+const MAX_WORKERS = 7;
+// Ideal chunk per worker
+const CHUNK_PER_WORKER = 10;
+
 function main() {
   let network = argv.net;
 
@@ -101,18 +116,16 @@ function main() {
   const from = argv.from || 0;
   const seed = argv.seed;
 
-  // Maximum number of workers launched
-  const MAX_WORKERS = 7;
-  // Ideal chunk per worker
-  const CHUNK_PER_WORKER = 10;
+  const maxWorkers = argv.workers || MAX_WORKERS;
+  const chunkPerWorker = argv.chunksize || CHUNK_PER_WORKER;
 
   // Ideal Maximum number of workers for the limit requested
-  let numWorkers = Math.floor(limit / CHUNK_PER_WORKER);
+  let numWorkers = Math.floor(limit / chunkPerWorker);
 
-  if (limit % CHUNK_PER_WORKER !== 0) {
+  if (limit % chunkPerWorker !== 0) {
     numWorkers += 1;
   }
-  numWorkers = Math.min(MAX_WORKERS, numWorkers);
+  numWorkers = Math.min(maxWorkers, numWorkers);
 
   // The real chunk size for each worker
   const workerChunkSize = Math.floor(limit / numWorkers);
@@ -141,6 +154,7 @@ function main() {
       watch,
       limit: workerLimit,
       seed,
+      chunksize: argv.chunksize,
     });
   }
 }
