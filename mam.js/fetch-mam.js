@@ -14,7 +14,7 @@ async function fetchMamChannel({
   watch,
   limit,
   seed,
-  maxChunkSize
+  maxChunkSize,
 }) {
   try {
     // Initialise IOTA API
@@ -28,7 +28,7 @@ async function fetchMamChannel({
       limit,
       from,
       seed,
-      maxChunkSize
+      maxChunkSize,
     });
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
@@ -52,7 +52,17 @@ function startRoot({ root, seed, mode, from, sideKey }) {
 }
 
 // limit is ignored if watch is on
-function retrieve({ api, root, mode, sideKey, watch, limit, from, seed, maxChunkSize }) {
+function retrieve({
+  api,
+  root,
+  mode,
+  sideKey,
+  watch,
+  limit,
+  from,
+  seed,
+  maxChunkSize,
+}) {
   return new Promise((resolve, reject) => {
     let currentRoot = startRoot({ root, seed, mode, from, sideKey });
 
@@ -225,7 +235,7 @@ async function main() {
     watch,
     limit,
     seed,
-    maxChunkSize
+    maxChunkSize,
   });
 }
 

@@ -1,7 +1,7 @@
 const Iota = require("@iota/core");
 const { mamFetchAll, createChannel, channelRoot } = require("@iota/mam.js");
 const { trytesToAscii } = require("@iota/converter");
-const { parentPort } = require("worker_threads");
+const { workerData } = require("worker_threads");
 
 const INTERVAL = 5000;
 const CHUNK_SIZE = 10;
@@ -159,17 +159,15 @@ process.on("SIGINT", () => {
 
 let globalIntervalId;
 
-parentPort.once("message", (argv) => {
-  main(argv).then(
-    (intervalId) => {
-      globalIntervalId = intervalId;
-      if (!intervalId) {
-        process.exit(0);
-      }
-    },
-    (error) => {
-      console.error("Error: ", error);
-      process.exit(1);
+main(workerData).then(
+  (intervalId) => {
+    globalIntervalId = intervalId;
+    if (!intervalId) {
+      process.exit(0);
     }
-  );
-});
+  },
+  (error) => {
+    console.error("Error: ", error);
+    process.exit(1);
+  }
+);

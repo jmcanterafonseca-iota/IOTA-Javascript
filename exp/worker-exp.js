@@ -1,3 +1,11 @@
+/**
+ *
+ *    See  https://medium.com/@nodesource/understanding-worker-threads-in-node-js-2c854dfd291c
+ *
+ *    See https://blog.insiderattack.net/deep-dive-into-worker-threads-in-node-js-e75e10546b11
+ *
+ */
+
 const { Worker } = require("worker_threads");
 
 // Default Maximum number of workers launched
@@ -133,9 +141,6 @@ function main() {
   console.log(numWorkers, " ", workerChunkSize);
 
   for (let k = 0; k < numWorkers; k++) {
-    const worker = new Worker("./exp/worker-mam-fetch.js");
-    worker.on("message", (message) => console.log(message));
-
     const workerFrom = from + k * workerChunkSize;
     let workerLimit = workerChunkSize;
     // Last worker has to be in charge of the remaining
@@ -145,7 +150,7 @@ function main() {
 
     console.log(workerFrom, " ", workerLimit);
 
-    worker.postMessage({
+    const workerInitParams = {
       network,
       mode,
       root,
@@ -155,7 +160,12 @@ function main() {
       limit: workerLimit,
       seed,
       chunksize: argv.chunksize,
+    };
+
+    const worker = new Worker("./exp/worker-mam-fetch.js", {
+      workerData: workerInitParams,
     });
+    worker.on("message", (message) => console.log(message));
   }
 }
 
