@@ -50,38 +50,24 @@ function startRoot({ root, seed, mode, from, sideKey }) {
 }
 
 // limit is ignored if watch is on
-async function retrieve({
-  api,
-  root,
-  mode,
-  sideKey,
-  watch,
-  limit,
-  from,
-  seed,
-}) {
-  let currentRoot = startRoot({ root, seed, mode, from, sideKey });
+function retrieve({ api, root, mode, sideKey, watch, limit, from, seed }) {
+  return new Promise((resolve, reject) => {
+    let currentRoot = startRoot({ root, seed, mode, from, sideKey });
 
-  let executing = false;
+    let total = 0;
 
-  let total = 0;
+    let executing = false;
 
-  const retrievalFunction = async () => {
-    if (executing === true) {
-      return;
-    }
+    const retrievalFunction = async () => {
+      if (executing === true) {
+        return;
+      }
 
-    executing = true;
+      executing = true;
 
-    let finish = false;
-
-    while (!finish) {
       const chunkSize = Math.min(CHUNK_SIZE, limit - total);
 
       try {
-        // console.log('Current Root', currentRoot);
-
-        // eslint-disable-next-line no-await-in-loop
         const fetched = await mamFetchAll(
           api,
           currentRoot,
@@ -96,39 +82,34 @@ async function retrieve({
 
         if (fetched.length > 0) {
           currentRoot = fetched[fetched.length - 1].nextRoot;
-          total += fetched.length;
-          if (total === limit) {
-            finish = true;
-          }
-        } else {
-          finish = true;
-        }
 
+          total += fetched.length;
+          if (total < limit) {
+            setImmediate(retrievalFunction);
+          }
+        } else if (watch === true && !globalIntervalId) {
+          const intervalId = setInterval(retrievalFunction, INTERVAL);
+          resolve(intervalId);
+        } else {
+          resolve();
+        }
         // console.log('Current Root', currentRoot);
       } catch (error) {
         console.error("Error while fetching MAM Channel: ", error);
-        finish = true;
+        reject(error);
+      } finally {
+        executing = false;
       }
-    }
+    };
 
-    executing = false;
-  };
-
-  await retrievalFunction();
-
-  let intervalId;
-  if (watch === true) {
-    intervalId = setInterval(retrievalFunction, INTERVAL);
-  }
-
-  return intervalId;
+    setImmediate(retrievalFunction);
+  }); // end of promise
 }
 
 const argv = require("yargs")
   .option("watch", {
     alias: "w",
     type: "boolean",
-    default: false,
     description: "Watch the MAM Channel",
   })
   .option("net", {
@@ -164,7 +145,6 @@ const argv = require("yargs")
     alias: "l",
     type: "number",
     description: "Maximum number of messages to be fetched",
-    default: Infinity,
   })
   .option("from", {
     alias: "f",
@@ -178,7 +158,12 @@ const argv = require("yargs")
   })
   .help()
   .demandOption(["mode"])
-  .conflicts({ devnet: ["comnet", "net"], comnet: ["devnet", "net"] })
+  .conflicts({
+    devnet: ["comnet", "net"],
+    comnet: ["devnet", "net"],
+    root: ["from"],
+    limit: ["watch"],
+  })
   // eslint-disable-next-line no-shadow
   .check((argv) => {
     if (argv.mode === "restricted" && !argv.sidekey) {
@@ -192,11 +177,6 @@ const argv = require("yargs")
     if (typeof argv.from !== "undefined" && !argv.seed) {
       throw new Error(
         "Missing seed. Seed must be provided when start index (from) is provided"
-      );
-    }
-    if (typeof argv.from !== "undefined" && argv.root) {
-      throw new Error(
-        "Start index (from) and MAM Channel root are incompatible parameters"
       );
     }
     if (typeof argv.from === "undefined" && !argv.root && !argv.seed) {
@@ -219,8 +199,11 @@ async function main() {
   const mode = argv.mode;
   const root = argv.root;
   const sideKey = argv.sidekey;
-  const watch = argv.watch;
-  const limit = argv.limit;
+  let watch = argv.watch;
+  if (typeof watch === "undefined") {
+    watch = false;
+  }
+  const limit = argv.limit || Infinity;
 
   const from = argv.from;
   const seed = argv.seed;
