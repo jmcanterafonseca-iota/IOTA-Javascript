@@ -14,6 +14,7 @@ async function fetchMamChannel({
   watch,
   limit,
   seed,
+  maxChunkSize
 }) {
   try {
     // Initialise IOTA API
@@ -27,6 +28,7 @@ async function fetchMamChannel({
       limit,
       from,
       seed,
+      maxChunkSize
     });
   } catch (error) {
     console.error("Error while fetching MAM Channel: ", error);
@@ -50,7 +52,7 @@ function startRoot({ root, seed, mode, from, sideKey }) {
 }
 
 // limit is ignored if watch is on
-function retrieve({ api, root, mode, sideKey, watch, limit, from, seed }) {
+function retrieve({ api, root, mode, sideKey, watch, limit, from, seed, maxChunkSize }) {
   return new Promise((resolve, reject) => {
     let currentRoot = startRoot({ root, seed, mode, from, sideKey });
 
@@ -65,7 +67,7 @@ function retrieve({ api, root, mode, sideKey, watch, limit, from, seed }) {
 
       executing = true;
 
-      const chunkSize = Math.min(CHUNK_SIZE, limit - total);
+      const chunkSize = Math.min(maxChunkSize, limit - total);
 
       try {
         const fetched = await mamFetchAll(
@@ -156,6 +158,10 @@ const argv = require("yargs")
     type: "string",
     description: "MAM Channel's seed",
   })
+  .option("chunksize", {
+    type: "number",
+    description: "Chunksize for retrieval",
+  })
   .help()
   .demandOption(["mode"])
   .conflicts({
@@ -208,6 +214,8 @@ async function main() {
   const from = argv.from;
   const seed = argv.seed;
 
+  const maxChunkSize = argv.chunksize || CHUNK_SIZE;
+
   return await fetchMamChannel({
     network,
     mode,
@@ -217,6 +225,7 @@ async function main() {
     watch,
     limit,
     seed,
+    maxChunkSize
   });
 }
 
