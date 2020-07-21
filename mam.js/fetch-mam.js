@@ -21,12 +21,14 @@ async function fetchMamChannel({
   seed,
   maxChunkSize,
   partitions,
+  combined,
 }) {
   try {
     // Initialise IOTA API
     const api = Iota.composeAPI({ provider: network });
 
-    if (partitions > 1) {
+    // mamFetchCombined
+    if (partitions > 1 && combined === true) {
       return await retrievePartitionedCombined({
         api,
         mode,
@@ -38,6 +40,20 @@ async function fetchMamChannel({
       });
     }
 
+    // Partition channels Promise.all
+    if (partitions > 1) {
+      return await retrievePartitioned({
+        api,
+        mode,
+        sideKey,
+        limit,
+        from,
+        seed,
+        partitions,
+      });
+    }
+
+    // Retrieve "iteratively"
     return await retrieve({
       api,
       root,
@@ -57,7 +73,7 @@ async function fetchMamChannel({
 
 /* Calculates the start root. from can be different than 0 and in that case a seed has to be provided */
 function startRoot({ root, seed, mode, from, sideKey }) {
-  if (typeof from === "undefined" && root) {
+  if ((typeof from === "undefined" || from === 0) && root) {
     return root;
   } else {
     if (typeof from === "undefined") {
@@ -218,6 +234,65 @@ function retrieve({
   }); // end of promise
 }
 
+function retrievePartitioned({
+  api,
+  mode,
+  sideKey,
+  limit,
+  from,
+  seed,
+  partitions,
+}) {
+  return new Promise((resolve, reject) => {
+    let partitionSize = Math.floor(limit / partitions);
+
+    if (partitionSize === 0) {
+      partitionSize = limit;
+    }
+
+    if (typeof from === "undefined") {
+      from = 0;
+    }
+
+    const channels = createPartitions({
+      from,
+      seed,
+      partitionSize,
+      sideKey,
+      limit,
+      mode,
+    });
+
+    const promises = [];
+    for (let k = 0; k < channels.length - 1; k++) {
+      promises.push(
+        retrieve({
+          api,
+          from: 0,
+          root: channels[k].root,
+          sideKey,
+          limit: partitionSize,
+          mode,
+        })
+      );
+    }
+
+    // Last channel we retrieve all
+    promises.push(
+      retrieve({
+        api,
+        from: 0,
+        root: channels[channels.length - 1].root,
+        sideKey,
+        limit: Infinity,
+        mode,
+      })
+    );
+
+    Promise.all(promises).then(resolve, reject);
+  });
+}
+
 const argv = require("yargs")
   .option("watch", {
     alias: "w",
@@ -277,6 +352,11 @@ const argv = require("yargs")
     description: "Number of partitions to use when fetching",
     default: 1,
   })
+  .option("combined", {
+    type: "boolean",
+    description: "MAM Fetch Combined",
+    default: false,
+  })
   .help()
   .demandOption(["mode"])
   .conflicts({
@@ -334,6 +414,8 @@ async function main() {
 
   const partitions = argv.partitions;
 
+  const combined = argv.combined;
+
   return await fetchMamChannel({
     network,
     mode,
@@ -345,6 +427,7 @@ async function main() {
     seed,
     maxChunkSize,
     partitions,
+    combined,
   });
 }
 
