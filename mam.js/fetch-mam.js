@@ -277,6 +277,8 @@ function retrievePartitioned({
       );
     }
 
+    const lastLimit = limit - (channels.length - 1) * partitionSize;
+
     // Last channel we retrieve all
     promises.push(
       retrieve({
@@ -284,7 +286,7 @@ function retrievePartitioned({
         from: 0,
         root: channels[channels.length - 1].root,
         sideKey,
-        limit: Infinity,
+        limit: lastLimit,
         mode,
       })
     );
