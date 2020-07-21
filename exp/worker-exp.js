@@ -10,7 +10,7 @@ const { Worker } = require("worker_threads");
 
 // Default Maximum number of workers launched
 const MAX_WORKERS = 5;
-// Ideal chunk per worker
+// Ideal chunk per worker by default
 const CHUNK_PER_WORKER = 10;
 
 const argv = require("yargs")
