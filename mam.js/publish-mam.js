@@ -38,7 +38,7 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
 
     return {
       treeRoot,
-      thisRoot: mamMessage.address,
+      thisRoot: mamMessage.root,
       nextIndex: channelState.start,
     };
   } catch (error) {
