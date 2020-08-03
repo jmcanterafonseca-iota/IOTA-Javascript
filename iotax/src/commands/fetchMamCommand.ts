@@ -8,7 +8,8 @@ const params: ICommandParam[] = [
     options: {
       alias: "r",
       type: "string",
-      description: "MAM Channel's root"
+      description: "MAM Channel's root",
+      global: false
     }
   },
   {
@@ -16,14 +17,16 @@ const params: ICommandParam[] = [
     options: {
       type: "string",
       description: "Sidekey for restricted channels",
-      default: null
+      default: null,
+      global: false
     }
   }, {
     name: "limit",
     options: {
       alias: "l",
       type: "number",
-      description: "Maximum number of messages to be fetched"
+      description: "Maximum number of messages to be fetched",
+      global: false
     }
   },
   {
@@ -31,7 +34,8 @@ const params: ICommandParam[] = [
     options: {
       alias: "f",
       type: "number",
-      description: "Start Index for retrieval"
+      description: "Start Index for retrieval",
+      global: false
     }
   },
   {
@@ -39,14 +43,16 @@ const params: ICommandParam[] = [
     options: {
       alias: "s",
       type: "string",
-      description: "MAM Channel's seed"
+      description: "MAM Channel's seed",
+      global: false
     }
   },
   {
     name: "chunksize",
     options: {
       type: "number",
-      description: "Chunksize for retrieval"
+      description: "Chunk size for retrieval",
+      global: false
     }
   },
   {
@@ -54,7 +60,8 @@ const params: ICommandParam[] = [
     options: {
       type: "number",
       description: "Number of partitions to use when fetching",
-      default: 1
+      default: 1,
+      global: false
     }
   },
   {
@@ -62,16 +69,47 @@ const params: ICommandParam[] = [
     options: {
       type: "boolean",
       description: "MAM Fetch Combined",
-      default: false
+      default: false,
+      global: false
+    }
+  },
+  {
+    name: "watch", options: {
+      alias: "w",
+      type: "boolean",
+      description: "Watch the MAM Channel",
+      global: false
     }
   }
 ];
 
+const conflicts = {
+  root: ["from"],
+  limit: ["watch"],
+  partitions: ["watch"]
+};
+
+const checkFunction = argv => {
+  if (typeof argv.from !== "undefined" && !argv.seed) {
+    throw new Error(
+      "Missing seed. Seed must be provided when start index (from) is provided"
+    );
+  }
+  if (typeof argv.from === "undefined" && !argv.root && !argv.seed) {
+    throw new Error("Missing MAM Channel's root or seed");
+  }
+
+  return true;
+};
+
 export default class FetchMamCommand implements ICommand {
   public subCommands: null;
-  public name: "fetch";
+  public name: string = "fetch";
+  public description: string = "MAM Channel Fetch";
 
   public execute(args: Arguments): boolean {
+    console.log("MAM Fetch");
+
     return true;
   }
 
@@ -79,5 +117,9 @@ export default class FetchMamCommand implements ICommand {
     params.forEach(aParam => {
       yargs.option(aParam.name, aParam.options);
     });
+
+    yargs.conflicts(conflicts);
+
+    yargs.check(checkFunction);
   }
 }

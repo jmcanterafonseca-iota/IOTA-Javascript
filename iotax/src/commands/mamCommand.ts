@@ -9,7 +9,9 @@ const params: ICommandParam[] = [{
     alias: "m",
     type: "string",
     description: "MAM Channel mode",
-    choices: ["public", "private", "restricted"]
+    choices: ["public", "private", "restricted"],
+    required: true,
+    global: false
   }
 }
 ];
@@ -19,8 +21,17 @@ const subCommands: Record<string, ICommand> = {
   publish: new PublishMamCommand()
 };
 
+const checkFunction = argv => {
+  if (argv.mode === "restricted" && !argv.sidekey) {
+    throw new Error("Missing sidekey for fetching a MAM restricted channel");
+  } else {
+    return true;
+  }
+};
+
 export default class MamCommand implements ICommand {
-  public name: "mam";
+  public name: string = "mam";
+  public description: string = "MAM Channel Operations";
   public subCommands: Record<string, ICommand> = subCommands;
 
   public execute(args: Arguments): boolean {
@@ -32,10 +43,18 @@ export default class MamCommand implements ICommand {
       yargs.option(aParam.name, aParam.options);
     });
 
+    yargs.check(checkFunction);
+
     Object.keys(subCommands).forEach(name => {
       const command: ICommand = subCommands[name];
 
-      command.register(yargs);
+      yargs.command(command.name,
+                    command.description,
+                    commandYargs => {
+                          command.register(commandYargs);
+                    },
+                    command.execute
+      );
     });
   }
 }

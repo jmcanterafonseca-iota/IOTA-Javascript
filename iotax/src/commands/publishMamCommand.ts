@@ -8,7 +8,8 @@ const params: ICommandParam[] = [
 
 export default class PublishMamCommand implements ICommand {
   public subCommands: null;
-  public name: "publish";
+  public name: string = "publish";
+  public description: string = "MAM Channel Publish";
 
   public execute(args: Arguments): boolean {
     return true;

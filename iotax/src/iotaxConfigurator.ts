@@ -1,6 +1,6 @@
 import { Arguments, Argv } from "yargs";
 import commandRegistry from "./commandRegistry";
-import globalParams from "./globalParams";
+import {globalCheckFunction, globalConflicts, globalParams} from "./globalParams";
 import ICommand from "./ICommand";
 
 export default class IotaxConfigurator {
@@ -9,6 +9,9 @@ export default class IotaxConfigurator {
     globalParams.forEach(aParam => {
       yargs.option(aParam.name, aParam.options);
     });
+
+    yargs.conflicts(globalConflicts);
+    yargs.check(globalCheckFunction, true);
 
     Object.keys(commandRegistry).forEach(name => {
       const command: ICommand = commandRegistry[name];
@@ -20,7 +23,7 @@ export default class IotaxConfigurator {
 
     yargs.help();
 
-    return yargs();
+    return yargs.argv;
   }
 
 }
