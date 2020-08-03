@@ -1,19 +1,20 @@
-import globalParams from "./globalParams";
+import { Arguments, Argv } from "yargs";
 import commandRegistry from "./commandRegistry";
+import globalParams from "./globalParams";
 import ICommand from "./ICommand";
-import yargs, { Arguments } from "yargs";
 
 export default class IotaxConfigurator {
-  public static configure(): Arguments {
+
+  public static parseCommandLine(yargs: Argv): Arguments {
     globalParams.forEach(aParam => {
       yargs.option(aParam.name, aParam.options);
     });
 
     Object.keys(commandRegistry).forEach(name => {
-      const command :ICommand = commandRegistry[name];
+      const command: ICommand = commandRegistry[name];
 
-      yargs.command(command.name, command.description, (yargs) => {
-        command.register(yargs);
+      yargs.command(command.name, command.description, commandYargs => {
+        command.register(commandYargs);
       });
     });
 
@@ -21,4 +22,5 @@ export default class IotaxConfigurator {
 
     return yargs();
   }
+
 }

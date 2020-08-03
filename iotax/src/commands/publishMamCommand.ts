@@ -1,21 +1,22 @@
-import ICommandParam from "../ICommandParam";
+import {Arguments, Argv} from "yargs";
 import ICommand from "../ICommand";
+import ICommandParam from "../ICommandParam";
 
 const params: ICommandParam[] = [
-  /** TODO: To be defined */
+  /* TD: To be defined */
 ];
 
 export default class PublishMamCommand implements ICommand {
-  subCommands: null;
-  name: "publish";
+  public subCommands: null;
+  public name: "publish";
 
-  public execute(): boolean {
+  public execute(args: Arguments): boolean {
     return true;
   }
 
-  public register(yargs): void {
+  public register(yargs: Argv): void {
     params.forEach(aParam => {
-      yargs.option(aParam.options, aParam.options);
+      yargs.option(aParam.name, aParam.options);
     });
   }
 }

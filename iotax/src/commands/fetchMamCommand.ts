@@ -1,6 +1,6 @@
+import { Arguments, Argv } from "yargs";
 import ICommand from "../ICommand";
 import ICommandParam from "../ICommandParam";
-import { Argv } from "yargs";
 
 const params: ICommandParam[] = [
   {
@@ -8,7 +8,7 @@ const params: ICommandParam[] = [
     options: {
       alias: "r",
       type: "string",
-      description: "MAM Channel's root",
+      description: "MAM Channel's root"
     }
   },
   {
@@ -16,14 +16,14 @@ const params: ICommandParam[] = [
     options: {
       type: "string",
       description: "Sidekey for restricted channels",
-      default: null,
+      default: null
     }
   }, {
     name: "limit",
     options: {
       alias: "l",
       type: "number",
-      description: "Maximum number of messages to be fetched",
+      description: "Maximum number of messages to be fetched"
     }
   },
   {
@@ -31,7 +31,7 @@ const params: ICommandParam[] = [
     options: {
       alias: "f",
       type: "number",
-      description: "Start Index for retrieval",
+      description: "Start Index for retrieval"
     }
   },
   {
@@ -39,14 +39,14 @@ const params: ICommandParam[] = [
     options: {
       alias: "s",
       type: "string",
-      description: "MAM Channel's seed",
+      description: "MAM Channel's seed"
     }
   },
   {
     name: "chunksize",
     options: {
       type: "number",
-      description: "Chunksize for retrieval",
+      description: "Chunksize for retrieval"
     }
   },
   {
@@ -54,7 +54,7 @@ const params: ICommandParam[] = [
     options: {
       type: "number",
       description: "Number of partitions to use when fetching",
-      default: 1,
+      default: 1
     }
   },
   {
@@ -62,22 +62,22 @@ const params: ICommandParam[] = [
     options: {
       type: "boolean",
       description: "MAM Fetch Combined",
-      default: false,
+      default: false
     }
   }
 ];
 
 export default class FetchMamCommand implements ICommand {
-  subCommands: null;
-  name: "fetch";
+  public subCommands: null;
+  public name: "fetch";
 
-  public execute(parameters: Argv): boolean {
+  public execute(args: Arguments): boolean {
     return true;
   }
 
-  public register(yargs): void {
+  public register(yargs: Argv): void {
     params.forEach(aParam => {
-      yargs.option(aParam.options, aParam.options);
+      yargs.option(aParam.name, aParam.options);
     });
   }
-};
+}

@@ -205,6 +205,7 @@ function retrieve({
         );
 
         fetched.forEach((result) => {
+          console.log(result);
           console.log(JSON.parse(trytesToAscii(result.message)));
         });
 

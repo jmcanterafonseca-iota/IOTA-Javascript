@@ -1,8 +1,8 @@
+import yargs, { Arguments } from "yargs";
 import IotaxConfigurator from "./iotaxConfigurator";
-import {Argv} from "yargs";
 import IotaxExecutor from "./iotaxExecutor";
 
-const args: Argv = IotaxConfigurator.configure();
+const args: Arguments = IotaxConfigurator.parseCommandLine(yargs);
 
 // This will not execute if the command line is not syntactically and semantically correct
 IotaxExecutor.execute(args);

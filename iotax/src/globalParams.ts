@@ -5,18 +5,18 @@ const globalParams: ICommandParam[] = [
     name: "devnet",
     options: {
       type: "boolean",
-      description: "IOTA Devnet",
+      description: "IOTA Devnet"
     }
   },
   {
     name: "comnet",
     options: {
       type: "boolean",
-      description: "IOTA Comnet",
+      description: "IOTA Comnet"
     }
   },
   {
-    name: "net", 
+    name: "net",
     options: {
       alias: "n",
       type: "string",

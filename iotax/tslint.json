@@ -120,7 +120,7 @@
       "comment-format": [
           true
       ],
-      "completed-docs": true,
+      "completed-docs": false,
       "export-name": false,
       "function-name": [
           true,
