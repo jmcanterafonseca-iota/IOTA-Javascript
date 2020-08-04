@@ -6,5 +6,5 @@ export default interface ICommand {
   description?: string;
 
   register(yargs: Argv): void;
-  execute(args: Arguments): boolean;
+  execute(args: Arguments): Promise<boolean>;
 }

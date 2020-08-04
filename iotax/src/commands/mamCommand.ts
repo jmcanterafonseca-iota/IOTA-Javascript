@@ -34,7 +34,7 @@ export default class MamCommand implements ICommand {
   public description: string = "MAM Channel Operations";
   public subCommands: Record<string, ICommand> = subCommands;
 
-  public execute(args: Arguments): boolean {
+  public async execute(args: Arguments): Promise<boolean> {
     return true;
   }
 

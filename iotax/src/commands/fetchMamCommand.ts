@@ -1,6 +1,7 @@
 import { Arguments, Argv } from "yargs";
 import ICommand from "../ICommand";
 import ICommandParam from "../ICommandParam";
+import FetchMamCommandExecutor from "./fetchMamCommandExecutor";
 
 const params: ICommandParam[] = [
   {
@@ -107,10 +108,10 @@ export default class FetchMamCommand implements ICommand {
   public name: string = "fetch";
   public description: string = "MAM Channel Fetch";
 
-  public execute(args: Arguments): boolean {
+  public async execute(args: Arguments): Promise<boolean> {
     console.log("MAM Fetch");
 
-    return true;
+    return await FetchMamCommandExecutor.execute(args);
   }
 
   public register(yargs: Argv): void {

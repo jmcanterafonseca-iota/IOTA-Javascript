@@ -11,7 +11,7 @@ export default class PublishMamCommand implements ICommand {
   public name: string = "publish";
   public description: string = "MAM Channel Publish";
 
-  public execute(args: Arguments): boolean {
+  public async execute(args: Arguments): Promise<boolean> {
     return true;
   }
 
