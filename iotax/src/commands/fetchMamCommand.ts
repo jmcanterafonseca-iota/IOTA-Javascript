@@ -109,8 +109,6 @@ export default class FetchMamCommand implements ICommand {
   public description: string = "MAM Channel Fetch";
 
   public async execute(args: Arguments): Promise<boolean> {
-    console.log("MAM Fetch");
-
     return await FetchMamCommandExecutor.execute(args);
   }
 

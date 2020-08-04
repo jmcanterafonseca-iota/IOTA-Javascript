@@ -5,8 +5,6 @@ import { channelRoot, createChannel, IMamChannelState, mamFetchAll, mamFetchComb
 
 import { trytesToAscii } from "@iota/converter";
 
-import "node";
-
 const INTERVAL: number = 5000;
 const CHUNK_SIZE: number = 10;
 
@@ -166,7 +164,6 @@ async function retrieve(args: RetrievalParams, api: API): Promise<unknown> {
         );
 
         fetched.forEach(result => {
-          console.log(result);
           console.log(JSON.parse(trytesToAscii(result.message)));
         });
 
