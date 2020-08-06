@@ -2,6 +2,7 @@ import { Arguments, Argv } from "yargs";
 import ICommand from "../ICommand";
 import ICommandParam from "../ICommandParam";
 import FetchMamCommandExecutor from "./fetchMamCommandExecutor";
+import { seedParam } from "./mamParams";
 
 const params: ICommandParam[] = [
   {
@@ -14,14 +15,6 @@ const params: ICommandParam[] = [
     }
   },
   {
-    name: "sidekey",
-    options: {
-      type: "string",
-      description: "Sidekey for restricted channels",
-      default: null,
-      global: false
-    }
-  }, {
     name: "limit",
     options: {
       alias: "l",
@@ -39,15 +32,7 @@ const params: ICommandParam[] = [
       global: false
     }
   },
-  {
-    name: "seed",
-    options: {
-      alias: "s",
-      type: "string",
-      description: "MAM Channel's seed",
-      global: false
-    }
-  },
+  seedParam,
   {
     name: "chunksize",
     options: {

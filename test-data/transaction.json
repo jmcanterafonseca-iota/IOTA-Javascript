@@ -1,0 +1,8 @@
+{
+  "type": "scanTransaction",
+  "symbology": "LABEL-TYPE-UPCA",
+  "value": "1003",
+  "location": "latitude: 41.65518, longitude: -4.72372",
+  "deviceId": "SCAN-DEMO-MOBILE-COMPUTER-1003",
+  "jsonData": {}
+}

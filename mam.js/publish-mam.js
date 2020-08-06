@@ -28,8 +28,6 @@ async function publish({ seed, mode, network, packet, startIndex, sideKey }) {
     // Go to the corresponding channel
     const channelState = createChannel(seed, 2, mode, sideKey);
 
-    console.log(channelState);
-
     const treeRoot = channelRoot(channelState);
 
     channelState.start = startIndex;
