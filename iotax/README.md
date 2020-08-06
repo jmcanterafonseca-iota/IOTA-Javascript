@@ -1,3 +1,3 @@
 # iotax
 
-CLI for IOTA 1, Chrysalis and beyond
+See https://github.com/jmcanterafonseca-iota/iotax
